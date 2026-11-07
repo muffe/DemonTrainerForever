@@ -2,6 +2,8 @@
 
 Warlock addon for WoW Forever. Shows which grimoires your demons can learn, at which level, and which they already know, without walking to the demon trainer.
 
+![Demon Trainer Forever window](docs/screenshot.png)
+
 ## Features
 
 - Grimoires grouped by level, with count and total cost per level, so you can tell whether a trainer visit is worth it.

@@ -9,3 +9,4 @@ externals:
 ignore:
   - tools
   - tests
+  - docs
