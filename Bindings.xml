@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="DEMONTRAINER_TOGGLE" header="DEMONTRAINER" category="ADDONS">
+        DemonTrainer_Toggle()
+    </Binding>
+</Bindings>
