@@ -6,6 +6,8 @@
 ## Version: @project-version@
 ## IconTexture: Interface\Icons\INV_Misc_Book_06
 ## X-License: MIT
+## X-Curse-Project-ID: 1789461
+## X-Wago-ID: rN4rgdKD
 ## SavedVariablesPerCharacter: DemonTrainerForeverDB
 
 Libs\LibStub\LibStub.lua
