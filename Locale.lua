@@ -1,7 +1,7 @@
 local _, ns = ...
 
 local L = {
-    TITLE = "Demon Trainer",
+    TITLE = "Demon Trainer Forever",
     NOW = "Available now",
     LEVEL = "Level %d",
     LEARNED = "Learned",
@@ -12,7 +12,7 @@ local L = {
     CLICK_SHOW = "Click to show",
     NOTICE_LOGIN = "Open grimoires at the demon trainer: %d (%s)",
     NOTICE_LEVEL = "New grimoires: %d. Open in total: %d (%s)",
-    NOT_WARLOCK = "Demon Trainer only works for warlocks.",
+    NOT_WARLOCK = "Demon Trainer Forever only works for warlocks.",
     TOGGLE = "Toggle window",
     FAMILY = {
         Imp = "Imp",
@@ -34,7 +34,7 @@ if GetLocale() == "deDE" then
     L.CLICK_SHOW = "Klicken zum Einblenden"
     L.NOTICE_LOGIN = "Offene Grimoires beim Dämonenausbilder: %d (%s)"
     L.NOTICE_LEVEL = "Neue Grimoires: %d. Offen insgesamt: %d (%s)"
-    L.NOT_WARLOCK = "Demon Trainer funktioniert nur für Hexenmeister."
+    L.NOT_WARLOCK = "Demon Trainer Forever funktioniert nur für Hexenmeister."
     L.TOGGLE = "Fenster ein-/ausblenden"
     L.FAMILY = {
         Imp = "Wichtel",
@@ -47,5 +47,5 @@ end
 
 ns.L = L
 
-BINDING_HEADER_DEMONTRAINER = "Demon Trainer"
-BINDING_NAME_DEMONTRAINER_TOGGLE = L.TOGGLE
+BINDING_HEADER_DEMONTRAINERFOREVER = "Demon Trainer Forever"
+BINDING_NAME_DEMONTRAINERFOREVER_TOGGLE = L.TOGGLE

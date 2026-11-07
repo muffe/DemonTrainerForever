@@ -212,7 +212,7 @@ local function createFamilyButton(family, index)
 end
 
 local function createFrame()
-    frame = CreateFrame("Frame", "DemonTrainerFrame", UIParent, "UIPanelDialogTemplate")
+    frame = CreateFrame("Frame", "DemonTrainerForeverFrame", UIParent, "UIPanelDialogTemplate")
     frame:SetSize(WIDTH, HEIGHT)
     local point = ns.db.point
     if point then

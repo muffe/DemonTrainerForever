@@ -21,7 +21,7 @@ OUT = Path(__file__).resolve().parent.parent / "Data.lua"
 
 
 def fetch(url):
-    request = urllib.request.Request(url, headers={"User-Agent": "DemonTrainer-data-generator"})
+    request = urllib.request.Request(url, headers={"User-Agent": "DemonTrainerForever-data-generator"})
     with urllib.request.urlopen(request) as response:
         return response.read().decode("utf-8")
 

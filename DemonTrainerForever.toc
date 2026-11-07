@@ -1,12 +1,12 @@
 ## Interface: 16001
-## Title: Demon Trainer
+## Title: Demon Trainer Forever
 ## Notes: Shows which grimoires your demons can learn, at which level, and which they already know.
 ## Notes-deDE: Zeigt, welche Grimoires deine Dämonen ab welcher Stufe lernen können und welche sie schon kennen.
 ## Author: muffe
 ## Version: @project-version@
 ## IconTexture: Interface\Icons\INV_Misc_Book_06
 ## X-License: MIT
-## SavedVariablesPerCharacter: DemonTrainerDB
+## SavedVariablesPerCharacter: DemonTrainerForeverDB
 
 Locale.lua
 Data.lua

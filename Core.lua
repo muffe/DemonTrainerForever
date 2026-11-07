@@ -20,7 +20,7 @@ function ns.Coins(copper)
 end
 
 function ns.Print(message)
-    print("|cff9482c9Demon Trainer:|r " .. message .. " |cff808080/grim|r")
+    print("|cff9482c9Demon Trainer Forever:|r " .. message .. " |cff808080/grim|r")
 end
 
 -- Runs fn once after delay, no matter how often it is requested in between.
@@ -147,8 +147,8 @@ events:SetScript("OnEvent", function(self, event, ...)
         if ... ~= addonName then return end
         self:UnregisterEvent("ADDON_LOADED")
         if select(2, UnitClass("player")) ~= "WARLOCK" then return end
-        local db = DemonTrainerDB or {}
-        DemonTrainerDB = db
+        local db = DemonTrainerForeverDB or {}
+        DemonTrainerForeverDB = db
         db.learned = db.learned or {}
         db.scanned = db.scanned or {}
         db.hidden = db.hidden or {}
@@ -189,7 +189,7 @@ events:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
-function DemonTrainer_Toggle()
+function DemonTrainerForever_Toggle()
     if not ns.db then
         ns.Print(L.NOT_WARLOCK)
         return
@@ -197,6 +197,6 @@ function DemonTrainer_Toggle()
     ns.ToggleWindow()
 end
 
-SLASH_DEMONTRAINER1 = "/grim"
-SLASH_DEMONTRAINER2 = "/demontrainer"
-SlashCmdList.DEMONTRAINER = DemonTrainer_Toggle
+SLASH_DEMONTRAINERFOREVER1 = "/grim"
+SLASH_DEMONTRAINERFOREVER2 = "/demontrainer"
+SlashCmdList.DEMONTRAINERFOREVER = DemonTrainerForever_Toggle

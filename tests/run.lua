@@ -63,14 +63,14 @@ tinsert = table.insert
 
 local ns = {}
 for _, file in ipairs({ "Locale.lua", "Data.lua", "Core.lua", "UI.lua" }) do
-  assert(loadfile(dir .. "/" .. file))("DemonTrainer", ns)
+  assert(loadfile(dir .. "/" .. file))("DemonTrainerForever", ns)
 end
 
 -- data sanity
 assert(#ns.grimoires == 59 + 11, "entries: " .. #ns.grimoires)
 for i = 2, #ns.grimoires do assert(ns.grimoires[i-1].level <= ns.grimoires[i].level) end
 
-fire("ADDON_LOADED", "DemonTrainer")
+fire("ADDON_LOADED", "DemonTrainerForever")
 fire("PLAYER_ENTERING_WORLD", true, false)
 runTimers()
 assert(#printed == 0, "no notice expected while nothing is scanned")
@@ -79,7 +79,7 @@ assert(#printed == 0, "no notice expected while nothing is scanned")
 pet = "Pet-0-1-1-1-416-0000"
 petSpells = { [7801] = true, [7805] = true, [4511] = true, [8316] = true }
 fire("UNIT_PET", "player"); runTimers()
-local db = DemonTrainerDB
+local db = DemonTrainerForeverDB
 assert(db.scanned.Imp and not db.scanned.Voidwalker)
 for _, k in ipairs({ "Imp:16302", "Imp:16316", "Imp:16317", "Imp:16321", "Imp:16322", "Imp:16323", "Imp:16331", "Imp:16326", "Imp:16327" }) do
   assert(db.learned[k], "should be learned: " .. k)
@@ -98,7 +98,7 @@ assert(db.scanned.Succubus and db.learned["Succubus:16375"] and not db.learned["
 db.hidden.Incubus = true
 bags[16357] = 1 -- Consume Shadows r1 in bags
 
-SlashCmdList.DEMONTRAINER("")
+SlashCmdList.DEMONTRAINERFOREVER("")
 local function dump()
   for _, f in ipairs(frames) do
     if f._kind == "Button" and rawget(f, "left") and f._shown then

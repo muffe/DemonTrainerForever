@@ -1,4 +1,4 @@
-# Demon Trainer
+# Demon Trainer Forever
 
 Warlock addon for WoW Forever. Shows which grimoires your demons can learn, at which level, and which they already know, without walking to the demon trainer.
 
