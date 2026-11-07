@@ -39,3 +39,4 @@ jobs:
         with:
           name: DemonTrainerForever
           path: .release/*.zip
+          include-hidden-files: true
