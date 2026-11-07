@@ -11,6 +11,7 @@ Warlock addon for WoW Forever. Shows which grimoires your demons can learn, at w
 - Grimoires in your bags show as "In bags".
 - Succubus and Incubus are tracked separately.
 - Click a demon icon to hide demons you don't use.
+- Shift-click a grimoire to link it in chat.
 - Chat notice on login and level up when new grimoires are available.
 
 Open the window from the minimap button, with `/grim`, or with a key bound under Key Bindings → AddOns. `/grim minimap` hides or shows the minimap button.

@@ -3,11 +3,25 @@ local L = ns.L
 
 local ICON = "Interface\\Icons\\INV_Misc_Book_06"
 
+-- Lowest level above the given one at which a shown demon has a grimoire to buy.
+local function nextLevel(level)
+    for _, entry in ipairs(ns.grimoires) do
+        if entry.level > level and not ns.db.hidden[entry.family] and ns:Status(entry) == "open" then
+            return entry.level
+        end
+    end
+end
+
 local function addTooltip(tooltip)
     tooltip:AddLine(L.TITLE)
-    local count, cost = ns:OpenSummary(ns:PlayerLevel())
-    local open = count > 0 and string.format("%d (%s)", count, ns.Coins(cost)) or "–"
-    tooltip:AddDoubleLine(L.NOW, open, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1, 1, 1)
+    local level = ns:PlayerLevel()
+    local count, cost = ns:OpenSummary(level)
+    local nextAt = nextLevel(level)
+    if count > 0 then
+        tooltip:AddDoubleLine(L.NOW, string.format("%d (%s)", count, ns.Coins(cost)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1, 1, 1)
+    elseif nextAt then
+        tooltip:AddDoubleLine(L.NEXT, L.LEVEL:format(nextAt), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1, 1, 1)
+    end
     tooltip:AddLine(L.MINIMAP_HINT, GRAY_FONT_COLOR:GetRGB())
 end
 

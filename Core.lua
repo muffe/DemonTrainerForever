@@ -57,6 +57,14 @@ function ns:DisplayName(entry)
     return C_Item.GetItemNameByID(entry.itemId) or ("#" .. entry.itemId)
 end
 
+local isSpellKnown = C_SpellBook and C_SpellBook.IsSpellKnown or IsPlayerSpell
+
+-- False while the warlock can't summon this demon yet (e.g. the Felhunter before its quest).
+function ns:HasDemon(family)
+    if self.db.scanned[family] or not isSpellKnown then return true end
+    return isSpellKnown(ns.SUMMON_SPELLS[family])
+end
+
 -- "learned": the pet knows it. "bags": bought but not used yet.
 -- "unknown": this demon was never summoned with the addon running. "open": still has to be bought.
 function ns:Status(entry)
@@ -171,8 +179,12 @@ events:SetScript("OnEvent", function(self, event, ...)
         end
     elseif event == "UNIT_PET" then
         if ... == "player" then scheduleScan() end
-    elseif event == "PET_BAR_UPDATE" or event == "SPELLS_CHANGED" then
+    elseif event == "PET_BAR_UPDATE" then
         scheduleScan()
+    elseif event == "SPELLS_CHANGED" then
+        -- also refresh when a new summon spell was learned
+        scheduleScan()
+        debounce("refresh", 0.2, function() ns:Refresh() end)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         local unit, _, spellId = ...
         local family = unit == "player" and ns.SUMMON_TO_FAMILY[spellId]

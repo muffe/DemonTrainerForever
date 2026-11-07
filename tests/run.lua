@@ -19,6 +19,7 @@ local function obj(kind)
       elseif k == "GetName" then return self._name
       elseif k == "GetPoint" then return "CENTER", nil, "CENTER", 0, 0
       elseif k == "SetHeight" then self._h = a[1]
+      elseif k == "SetTexture" then self._tex = a[1]
       end
     end
   end })
@@ -37,7 +38,9 @@ end
 C_Timer = { After = function(_, fn) table.insert(timers, fn) end }
 Enum = { SpellBookSpellBank = { Pet = 1 } }
 local petSpells = {}
-C_SpellBook = { IsSpellInSpellBook = function(id, bank) assert(bank == 1); return petSpells[id] == true end }
+local playerSpells = { [688] = true, [697] = true, [712] = true, [713] = true } -- no Felhunter yet
+C_SpellBook = { IsSpellInSpellBook = function(id, bank) assert(bank == 1); return petSpells[id] == true end,
+  IsSpellKnown = function(id) return playerSpells[id] == true end }
 local bags = {}
 C_Item = { GetItemCount = function(id) return bags[id] or 0 end, GetItemNameByID = function(id) return "Item"..id end, RequestLoadItemDataByID = function() end }
 C_Spell = { GetSpellName = function(id) return "Spell"..id end, GetSpellSubtext = function(id) return "Rang ?" end,
@@ -60,6 +63,10 @@ UIParent = obj("Frame"); UISpecialFrames = {}; GameTooltip = obj("Tooltip"); Gam
 GameFontNormal, GameFontHighlightSmall = {}, {}
 SlashCmdList = {}
 tinsert = table.insert
+SOUNDKIT = {}; function PlaySound() end
+local linked
+function HandleModifiedItemClick(link) linked = link end
+C_Item.GetItemInfo = function(id) return "Item"..id, "[Item"..id.."]" end
 
 
 -- LibDataBroker / LibDBIcon stubs
@@ -135,10 +142,47 @@ fire("PLAYER_ENTERING_WORLD", true, false); runTimers()
 assert(launcher and iconShown and iconDb == DemonTrainerForeverDB.minimap)
 launcher.OnTooltipShow(fakeTooltip)
 assert(tooltipLines[2] == "Jetzt verfügbar = 3 (1g60s0c)", tooltipLines[2])
+-- nothing open at the current level: show the next level instead of an empty "available now"
+local learnedBefore = {}
+for k, v in pairs(db.learned) do learnedBefore[k] = v end
+for _, entry in ipairs(ns.grimoires) do
+  if entry.level <= 32 then db.learned[entry.key] = true end
+end
+tooltipLines = {}
+launcher.OnTooltipShow(fakeTooltip)
+assert(tooltipLines[2] == "Nächste Grimoires = Stufe 34", tooltipLines[2])
+local function headerShown(text)
+  for _, f in ipairs(frames) do
+    if f._kind == "Button" and f._h == 22 and f._shown and rawget(f, "left") and f.left._text == text then return true end
+  end
+end
+ns.UpdateWindow()
+assert(not headerShown("Jetzt verfügbar"), "empty 'available now' section must be hidden")
+db.learned = learnedBefore
 SlashCmdList.DEMONTRAINERFOREVER(" Minimap ")
 assert(iconShown == false and DemonTrainerForeverDB.minimap.hide == true)
 SlashCmdList.DEMONTRAINERFOREVER("minimap")
 assert(iconShown == true and not DemonTrainerForeverDB.minimap.hide)
+-- demons the warlock can't summon yet
+assert(ns:HasDemon("Voidwalker") and not ns:HasDemon("Felhunter"))
+playerSpells[691] = true
+assert(ns:HasDemon("Felhunter"))
+
+-- level sections more than 6 levels away start collapsed (player is 32)
+ns.UpdateWindow()
+local function headerIcon(text)
+  for _, f in ipairs(frames) do
+    if f._kind == "Button" and f._h == 22 and f._shown and rawget(f, "left") and f.left._text == text then return f.icon._tex end
+  end
+end
+assert(headerIcon("Stufe 38") == "Interface\\Buttons\\UI-MinusButton-Up", tostring(headerIcon("Stufe 38")))
+assert(headerIcon("Stufe 40") == "Interface\\Buttons\\UI-PlusButton-Up", tostring(headerIcon("Stufe 40")))
+
+-- shift-click on a grimoire row links it in chat
+for _, f in ipairs(frames) do
+  if f._kind == "Button" and f._shown and rawget(f, "item") then f._scripts.OnClick(f); break end
+end
+assert(linked and linked:match("^%[Item%d+%]$"), tostring(linked))
 local window = DemonTrainerForeverFrame
 local wasShown = window:IsShown()
 launcher.OnClick()

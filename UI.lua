@@ -4,15 +4,18 @@ local L = ns.L
 local WIDTH, HEIGHT = 340, 480
 local CONTENT_WIDTH = WIDTH - 46
 local HEADER_HEIGHT, ITEM_HEIGHT, SECTION_GAP = 22, 18, 6
+-- Level sections further away than this start collapsed.
+local EXPANDED_LEVELS = 6
 
 local frame, content
 local familyButtons = {}
 local rows = {}
 
-local function isCollapsed(key)
-    local value = ns.db.collapsed[key]
-    if value == nil then return key == "learned" end
-    return value
+local function isCollapsed(section)
+    local value = ns.db.collapsed[section.key]
+    if value ~= nil then return value end
+    if section.level then return section.level > ns:PlayerLevel() + EXPANDED_LEVELS end
+    return section.key == "learned"
 end
 
 -- Sections: available now, one per upcoming level, learned.
@@ -20,7 +23,7 @@ local function buildSections()
     local level = ns:PlayerLevel()
     local now = { key = "now", title = L.NOW, color = GREEN_FONT_COLOR, items = {} }
     local learned = { key = "learned", title = L.LEARNED, color = GRAY_FONT_COLOR, items = {} }
-    local sections, byLevel = { now }, {}
+    local sections, byLevel = {}, {}
     for _, entry in ipairs(ns.grimoires) do
         if not ns.db.hidden[entry.family] then
             local status = ns:Status(entry)
@@ -34,6 +37,7 @@ local function buildSections()
                 if not section then
                     section = {
                         key = "L" .. entry.level,
+                        level = entry.level,
                         title = L.LEVEL:format(entry.level),
                         color = entry.level <= level + 2 and NORMAL_FONT_COLOR or GRAY_FONT_COLOR,
                         items = {},
@@ -45,13 +49,14 @@ local function buildSections()
             table.insert(section.items, { entry = entry, status = status })
         end
     end
+    if #now.items > 0 then table.insert(sections, 1, now) end
     if #learned.items > 0 then table.insert(sections, learned) end
     return sections
 end
 
 -- Count and cost of what still has to be bought at the trainer.
 local function summary(section)
-    if section.key == "learned" then return tostring(#section.items) end
+    if section.key == "learned" then return tostring(#section.items), 0 end
     local count, cost = 0, 0
     for _, item in ipairs(section.items) do
         if item.status == "open" then
@@ -59,15 +64,19 @@ local function summary(section)
             cost = cost + item.entry.cost
         end
     end
-    if count == 0 then return "–" end
-    return count .. "  ·  " .. ns.Coins(cost)
+    if count == 0 then return "–", 0 end
+    return count .. "  ·  " .. ns.Coins(cost), cost
 end
 
 local render
 
 local function onRowClick(row)
-    if not row.section then return end
-    ns.db.collapsed[row.section.key] = not isCollapsed(row.section.key)
+    if row.item then
+        local link = select(2, C_Item.GetItemInfo(row.item.entry.itemId))
+        if link then HandleModifiedItemClick(link) end
+        return
+    end
+    ns.db.collapsed[row.section.key] = not isCollapsed(row.section)
     render()
 end
 
@@ -78,7 +87,8 @@ local function onRowEnter(row)
     GameTooltip:SetItemByID(entry.itemId)
     GameTooltip:AddLine(L.FAMILY[entry.family], HIGHLIGHT_FONT_COLOR:GetRGB())
     if status == "unknown" then
-        GameTooltip:AddLine(L.UNKNOWN, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true)
+        local hint = ns:HasDemon(entry.family) and L.UNKNOWN or L.NO_DEMON
+        GameTooltip:AddLine(hint, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true)
     end
     GameTooltip:Show()
 end
@@ -117,14 +127,15 @@ end
 
 local function showHeader(row, section)
     row.section, row.item = section, nil
-    row.icon:SetTexture(isCollapsed(section.key) and "Interface\\Buttons\\UI-PlusButton-Up"
+    row.icon:SetTexture(isCollapsed(section) and "Interface\\Buttons\\UI-PlusButton-Up"
         or "Interface\\Buttons\\UI-MinusButton-Up")
     row.icon:SetDesaturated(false)
     row.left:SetFontObject(GameFontNormal)
     row.left:SetText(section.title)
     row.left:SetTextColor(section.color:GetRGB())
-    row.right:SetText(summary(section))
-    row.right:SetTextColor(HIGHLIGHT_FONT_COLOR:GetRGB())
+    local text, cost = summary(section)
+    row.right:SetText(text)
+    row.right:SetTextColor((GetMoney() < cost and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR):GetRGB())
 end
 
 local function showItem(row, item)
@@ -162,7 +173,7 @@ render = function()
         placeRow(row, y, HEADER_HEIGHT, 2, 14)
         showHeader(row, section)
         y = y + HEADER_HEIGHT
-        if not isCollapsed(section.key) then
+        if not isCollapsed(section) then
             for _, item in ipairs(section.items) do
                 count = count + 1
                 row = acquireRow(count)
@@ -181,7 +192,7 @@ local function updateFamilyButtons()
         local hidden = ns.db.hidden[family] == true
         button.icon:SetDesaturated(hidden)
         button:SetAlpha(hidden and 0.4 or 1)
-        button.unknown:SetShown(not ns.db.scanned[family])
+        button.unknown:SetShown(not ns.db.scanned[family] and ns:HasDemon(family))
     end
 end
 
@@ -203,7 +214,8 @@ local function createFamilyButton(family, index)
     button:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText(L.FAMILY[family])
-        GameTooltip:AddLine(ns.db.scanned[family] and L.SCANNED or L.UNKNOWN, 1, 1, 1, true)
+        local status = ns.db.scanned[family] and L.SCANNED or ns:HasDemon(family) and L.UNKNOWN or L.NO_DEMON
+        GameTooltip:AddLine(status, 1, 1, 1, true)
         GameTooltip:AddLine(ns.db.hidden[family] and L.CLICK_SHOW or L.CLICK_HIDE, GRAY_FONT_COLOR:GetRGB())
         GameTooltip:Show()
     end)
@@ -213,6 +225,7 @@ end
 
 local function createFrame()
     frame = CreateFrame("Frame", "DemonTrainerForeverFrame", UIParent, "UIPanelDialogTemplate")
+    frame:Hide()
     frame:SetSize(WIDTH, HEIGHT)
     local point = ns.db.point
     if point then
@@ -231,7 +244,11 @@ local function createFrame()
         local p, _, relativePoint, x, y = self:GetPoint()
         ns.db.point = { p, relativePoint, x, y }
     end)
-    frame:SetScript("OnShow", function() ns.UpdateWindow() end)
+    frame:SetScript("OnShow", function()
+        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN)
+        ns.UpdateWindow()
+    end)
+    frame:SetScript("OnHide", function() PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE) end)
     frame.Title:SetText(L.TITLE)
     tinsert(UISpecialFrames, frame:GetName())
 
@@ -254,9 +271,6 @@ function ns.UpdateWindow()
 end
 
 function ns.ToggleWindow()
-    if not frame then
-        createFrame()
-        frame:Hide()
-    end
+    if not frame then createFrame() end
     frame:SetShown(not frame:IsShown())
 end

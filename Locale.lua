@@ -3,10 +3,12 @@ local _, ns = ...
 local L = {
     TITLE = "Demon Trainer Forever",
     NOW = "Available now",
+    NEXT = "Next grimoires",
     LEVEL = "Level %d",
     LEARNED = "Learned",
     IN_BAGS = "In bags",
     UNKNOWN = "Summon this demon once so its learned grimoires can be detected.",
+    NO_DEMON = "You can't summon this demon yet.",
     SCANNED = "Learned grimoires detected",
     CLICK_HIDE = "Click to hide",
     CLICK_SHOW = "Click to show",
@@ -27,10 +29,12 @@ local L = {
 
 if GetLocale() == "deDE" then
     L.NOW = "Jetzt verfügbar"
+    L.NEXT = "Nächste Grimoires"
     L.LEVEL = "Stufe %d"
     L.LEARNED = "Gelernt"
     L.IN_BAGS = "In Taschen"
     L.UNKNOWN = "Diesen Dämon einmal beschwören, damit gelernte Grimoires erkannt werden."
+    L.NO_DEMON = "Diesen Dämon kannst du noch nicht beschwören."
     L.SCANNED = "Gelernte Grimoires erkannt"
     L.CLICK_HIDE = "Klicken zum Ausblenden"
     L.CLICK_SHOW = "Klicken zum Einblenden"
