@@ -8,7 +8,13 @@
 ## X-License: MIT
 ## SavedVariablesPerCharacter: DemonTrainerForeverDB
 
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\lib.xml
+
 Locale.lua
 Data.lua
 Core.lua
 UI.lua
+Minimap.lua

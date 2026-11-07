@@ -14,6 +14,8 @@ local L = {
     NOTICE_LEVEL = "New grimoires: %d. Open in total: %d (%s)",
     NOT_WARLOCK = "Demon Trainer Forever only works for warlocks.",
     TOGGLE = "Toggle window",
+    MINIMAP_HINT = "Click to toggle the window. Drag to move.",
+    MINIMAP_HIDDEN = "Minimap button hidden. Type /grim minimap to show it again.",
     FAMILY = {
         Imp = "Imp",
         Voidwalker = "Voidwalker",
@@ -36,6 +38,8 @@ if GetLocale() == "deDE" then
     L.NOTICE_LEVEL = "Neue Grimoires: %d. Offen insgesamt: %d (%s)"
     L.NOT_WARLOCK = "Demon Trainer Forever funktioniert nur für Hexenmeister."
     L.TOGGLE = "Fenster ein-/ausblenden"
+    L.MINIMAP_HINT = "Klicken: Fenster ein-/ausblenden. Ziehen: verschieben."
+    L.MINIMAP_HIDDEN = "Minimap-Button ausgeblendet. Mit /grim minimap wieder einblenden."
     L.FAMILY = {
         Imp = "Wichtel",
         Voidwalker = "Leerwandler",

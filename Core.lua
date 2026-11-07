@@ -20,7 +20,7 @@ function ns.Coins(copper)
 end
 
 function ns.Print(message)
-    print("|cff9482c9Demon Trainer Forever:|r " .. message .. " |cff808080/grim|r")
+    print("|cff9482c9Demon Trainer Forever:|r " .. message)
 end
 
 -- Runs fn once after delay, no matter how often it is requested in between.
@@ -123,7 +123,7 @@ end
 
 local function noticeLogin()
     local count, cost = ns:OpenSummary(ns:PlayerLevel())
-    if count > 0 then ns.Print(L.NOTICE_LOGIN:format(count, ns.Coins(cost))) end
+    if count > 0 then ns.Print(L.NOTICE_LOGIN:format(count, ns.Coins(cost)) .. " |cff808080/grim|r") end
 end
 
 local function noticeLevel(level)
@@ -133,7 +133,7 @@ local function noticeLevel(level)
     end
     if new == 0 then return end
     local count, cost = ns:OpenSummary(level)
-    ns.Print(L.NOTICE_LEVEL:format(new, count, ns.Coins(cost)))
+    ns.Print(L.NOTICE_LEVEL:format(new, count, ns.Coins(cost)) .. " |cff808080/grim|r")
 end
 
 local function scheduleScan()
@@ -154,6 +154,7 @@ events:SetScript("OnEvent", function(self, event, ...)
         db.hidden = db.hidden or {}
         db.collapsed = db.collapsed or {}
         ns.db = db
+        ns.SetupMinimap()
         for _, name in ipairs({
             "PLAYER_ENTERING_WORLD", "UNIT_PET", "PET_BAR_UPDATE", "SPELLS_CHANGED",
             "UNIT_SPELLCAST_SUCCEEDED", "PLAYER_LEVEL_UP", "BAG_UPDATE_DELAYED", "PLAYER_MONEY",
@@ -199,4 +200,10 @@ end
 
 SLASH_DEMONTRAINERFOREVER1 = "/grim"
 SLASH_DEMONTRAINERFOREVER2 = "/demontrainer"
-SlashCmdList.DEMONTRAINERFOREVER = DemonTrainerForever_Toggle
+SlashCmdList.DEMONTRAINERFOREVER = function(message)
+    if ns.db and strtrim(message or ""):lower() == "minimap" then
+        ns.ToggleMinimapButton()
+    else
+        DemonTrainerForever_Toggle()
+    end
+end

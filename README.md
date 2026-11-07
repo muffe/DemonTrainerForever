@@ -11,7 +11,15 @@ Warlock addon for WoW Forever. Shows which grimoires your demons can learn, at w
 - Click a demon icon to hide demons you don't use.
 - Chat notice on login and level up when new grimoires are available.
 
-Open the window with `/grim` or bind a key under Key Bindings → AddOns.
+Open the window from the minimap button, with `/grim`, or with a key bound under Key Bindings → AddOns. `/grim minimap` hides or shows the minimap button.
+
+## Development
+
+The libraries in `Libs/` are not in the repository. Release builds pull them from the externals in `.pkgmeta`. To run the addon from a checkout, download them first:
+
+```sh
+tools/fetch_libs.sh
+```
 
 ## Data
 

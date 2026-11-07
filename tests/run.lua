@@ -61,8 +61,27 @@ GameFontNormal, GameFontHighlightSmall = {}, {}
 SlashCmdList = {}
 tinsert = table.insert
 
+
+-- LibDataBroker / LibDBIcon stubs
+local launcher, iconDb, iconShown = nil, nil, nil
+local libs = {
+  ["LibDataBroker-1.1"] = { NewDataObject = function(_, name, obj) launcher = obj; return obj end },
+  ["LibDBIcon-1.0"] = {
+    Register = function(_, name, obj, db) iconDb = db; iconShown = not db.hide end,
+    Hide = function() iconShown = false end,
+    Show = function() iconShown = true end,
+  },
+}
+function LibStub(name) return assert(libs[name], name) end
+function strtrim(s) return (s:gsub("^%s+", ""):gsub("%s+$", "")) end
+local tooltipLines = {}
+local fakeTooltip = {
+  AddLine = function(_, text) table.insert(tooltipLines, text) end,
+  AddDoubleLine = function(_, left, right) table.insert(tooltipLines, left .. " = " .. right) end,
+}
+
 local ns = {}
-for _, file in ipairs({ "Locale.lua", "Data.lua", "Core.lua", "UI.lua" }) do
+for _, file in ipairs({ "Locale.lua", "Data.lua", "Core.lua", "UI.lua", "Minimap.lua" }) do
   assert(loadfile(dir .. "/" .. file))("DemonTrainerForever", ns)
 end
 
@@ -111,4 +130,17 @@ print("--- level up to 32")
 level = 32
 fire("PLAYER_LEVEL_UP", 32); runTimers()
 fire("PLAYER_ENTERING_WORLD", true, false); runTimers()
+
+-- minimap button
+assert(launcher and iconShown and iconDb == DemonTrainerForeverDB.minimap)
+launcher.OnTooltipShow(fakeTooltip)
+assert(tooltipLines[2] == "Jetzt verfügbar = 3 (1g60s0c)", tooltipLines[2])
+SlashCmdList.DEMONTRAINERFOREVER(" Minimap ")
+assert(iconShown == false and DemonTrainerForeverDB.minimap.hide == true)
+SlashCmdList.DEMONTRAINERFOREVER("minimap")
+assert(iconShown == true and not DemonTrainerForeverDB.minimap.hide)
+local window = DemonTrainerForeverFrame
+local wasShown = window:IsShown()
+launcher.OnClick()
+assert(window:IsShown() ~= wasShown)
 print("OK")
