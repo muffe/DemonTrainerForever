@@ -91,9 +91,12 @@ local function currentFamily()
     local guid = UnitGUID("pet")
     if not guid then return nil end
     local unitType, _, _, _, _, npcId = strsplit("-", guid)
+    -- WoW Forever can give summoned demons a "Creature" GUID too, so the npc id decides first
+    local family = ns.PET_NPC_IDS[tonumber(npcId)]
+    if family then return family end
     -- enslaved demons are "Creature" units and never learn grimoires
     if unitType ~= "Pet" then return nil end
-    return ns.PET_NPC_IDS[tonumber(npcId)] or ns.db.lastSummon
+    return ns.db.lastSummon
 end
 
 -- The pet spellbook only reports the highest rank of an ability, so every lower rank counts as learned too.

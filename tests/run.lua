@@ -117,6 +117,12 @@ pet = "Creature-0-1-1-1-1234-0000"; db.lastSummon = "Felhunter"
 fire("UNIT_PET", "player"); runTimers()
 assert(not db.scanned.Felhunter)
 
+-- a summoned demon with a "Creature" GUID still counts by its npc id
+pet = "Creature-0-1-1-1-1860-0000"; petSpells = {}
+fire("UNIT_PET", "player"); runTimers()
+assert(db.scanned.Voidwalker)
+db.scanned.Voidwalker = nil
+
 -- summon succubus via spell; npc id unknown -> falls back to last summon
 pet = "Pet-0-1-1-1-999999-0000"; petSpells = { [6360] = true }
 fire("UNIT_SPELLCAST_SUCCEEDED", "player", "cast", 712); runTimers()
