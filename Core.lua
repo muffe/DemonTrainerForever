@@ -65,11 +65,22 @@ function ns:HasDemon(family)
     return isSpellKnown(ns.SUMMON_SPELLS[family])
 end
 
+-- Sayaad grimoires are needed once per demon, so each copy in the bags covers one shown demon that hasn't learned it.
+local function inBags(entry)
+    local count = itemCount(entry.itemId)
+    for _, other in ipairs(ns.byItem[entry.itemId]) do
+        if count == 0 then return false end
+        if other == entry then return true end
+        if not ns.db.learned[other.key] and not ns.db.hidden[other.family] then count = count - 1 end
+    end
+    return false
+end
+
 -- "learned": the pet knows it. "bags": bought but not used yet.
 -- "unknown": this demon was never summoned with the addon running. "open": still has to be bought.
 function ns:Status(entry)
     if self.db.learned[entry.key] then return "learned" end
-    if itemCount(entry.itemId) > 0 then return "bags" end
+    if inBags(entry) then return "bags" end
     if not self.db.scanned[entry.family] then return "unknown" end
     return "open"
 end

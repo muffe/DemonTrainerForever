@@ -79,8 +79,10 @@ local RAW = {
 
 -- ns.grimoires: one entry per family, sorted by level, then family order.
 -- ns.chains[family][ability]: entries of one ability, lowest rank first.
+-- ns.byItem[itemId]: the entries one grimoire teaches (two for Sayaad grimoires).
 ns.grimoires = {}
 ns.chains = {}
+ns.byItem = {}
 
 local familyOrder = {}
 for i, family in ipairs(ns.FAMILIES) do
@@ -105,6 +107,8 @@ for _, row in ipairs(RAW) do
         local chain = ns.chains[f][ability] or {}
         ns.chains[f][ability] = chain
         table.insert(chain, entry)
+        ns.byItem[itemId] = ns.byItem[itemId] or {}
+        table.insert(ns.byItem[itemId], entry)
     end
 end
 
