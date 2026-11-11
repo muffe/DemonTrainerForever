@@ -9,10 +9,12 @@ local function obj(kind)
       elseif k == "GetText" then return self._text
       elseif k == "SetShown" then self._shown = a[1] and true or false; if a[1] and self._scripts.OnShow then self._scripts.OnShow(self) end
       elseif k == "Show" then local was=self._shown; self._shown = true; if not was and self._scripts.OnShow then self._scripts.OnShow(self) end
-      elseif k == "Hide" then self._shown = false
-      elseif k == "IsShown" then return self._shown
+      elseif k == "Hide" then local was=self._shown; self._shown = false; if was and self._scripts.OnHide then self._scripts.OnHide(self) end
+      elseif k == "IsShown" or k == "IsVisible" then return self._shown
+      elseif k == "GetFrameLevel" then return 1
       elseif k == "GetWidth" or k == "GetHeight" then return 300
       elseif k == "GetValue" then return 0
+      elseif k == "GetFrameStrata" then return "MEDIUM"
       elseif k == "SetScript" then self._scripts[a[1]] = a[2]
       elseif k == "RegisterEvent" then self._events[a[1]] = true
       elseif k == "UnregisterEvent" then self._events[a[1]] = nil
@@ -69,7 +71,18 @@ SOUNDKIT = {}; function PlaySound() end
 local linked
 function HandleModifiedItemClick(link) linked = link end
 C_Item.GetItemInfo = function(id) return "Item"..id, "[Item"..id.."]" end
-GameFontHighlight, GameFontHighlightLarge, GameFontNormalSmall = {}, {}, {}
+GameFontDisable, GameFontHighlight, GameFontHighlightLarge, GameFontNormalSmall = {}, {}, {}, {}
+function UnitName() return "Kurgul" end
+C_Item.GetItemIconByID = function(id) return id end
+function IsModifiedClick() return false end
+
+-- merchant stubs
+local merchantItems, bought, merchantClosed = {}, {}, false
+MerchantFrame = obj("Frame")
+function GetMerchantNumItems() return #merchantItems end
+function GetMerchantItemID(i) return merchantItems[i] end
+function BuyMerchantItem(i, n) table.insert(bought, { merchantItems[i], n }) end
+function CloseMerchant() merchantClosed = true end
 
 
 -- LibDataBroker / LibDBIcon stubs
@@ -91,7 +104,7 @@ local fakeTooltip = {
 }
 
 local ns = {}
-for _, file in ipairs({ "Locale.lua", "Data.lua", "Core.lua", "Widgets.lua", "UI.lua", "Minimap.lua" }) do
+for _, file in ipairs({ "Locale.lua", "Data.lua", "Core.lua", "Widgets.lua", "UI.lua", "Merchant.lua", "Minimap.lua" }) do
   assert(loadfile(dir .. "/" .. file))("DemonTrainerForever", ns)
 end
 
@@ -197,4 +210,65 @@ local wasShown = window:IsShown()
 launcher.OnClick()
 assert(window:IsShown() ~= wasShown)
 
+-- a merchant without grimoires keeps the normal merchant frame
+merchantItems = { 159 }
+fire("MERCHANT_SHOW"); runTimers()
+assert(not DemonTrainerForeverMerchant)
+
+-- at the demon trainer the grimoire window covers it (player is 32)
+db.hidden.Incubus = nil
+db.scanned.Incubus = true
+for _, entry in ipairs(ns.grimoires) do table.insert(merchantItems, entry.itemId) end
+local function merchantRows()
+  local list = {}
+  for _, f in ipairs(frames) do
+    if f._kind == "Button" and f._shown and rawget(f, "entry") then table.insert(list, f) end
+  end
+  return list
+end
+local function shownKeys()
+  local keys = {}
+  for _, row in ipairs(merchantRows()) do keys[#keys + 1] = row.entry.key end
+  table.sort(keys)
+  return table.concat(keys, " ")
+end
+fire("MERCHANT_SHOW"); runTimers()
+local merchantWindow = DemonTrainerForeverMerchant
+assert(merchantWindow:IsShown())
+-- Imp knows everything up to 32. Only the highest rank per ability is offered: Lash of Pain r2 (16368), not r1.
+-- Soothing Kiss r1 (16375) is learned by the Succubus only.
+assert(shownKeys() == "Incubus:16368 Incubus:16375 Incubus:16379 Incubus:16380 Succubus:16368 Succubus:16379 Succubus:16380", shownKeys())
+
+-- clicking a row buys it from the right merchant slot
+local seduction
+for _, row in ipairs(merchantRows()) do if row.entry.key == "Succubus:16379" then seduction = row end end
+seduction._scripts.OnClick(seduction)
+assert(#bought == 1 and bought[1][1] == 16379 and bought[1][2] == 1)
+
+-- one Seduction grimoire in the bags covers only one of the two demons
+bags[16379] = 1
+fire("BAG_UPDATE_DELAYED"); runTimers()
+assert(shownKeys() == "Incubus:16368 Incubus:16375 Incubus:16379 Incubus:16380 Succubus:16368 Succubus:16380", shownKeys())
+bags[16379] = 2
+fire("BAG_UPDATE_DELAYED"); runTimers()
+assert(not shownKeys():find("16379"), shownKeys())
+
+-- the merchant button uncovers the normal merchant frame without ending the visit
+for _, f in ipairs(frames) do
+  if f._kind == "Button" and f._text == "Händler" then f._scripts.OnClick(f) end
+end
+assert(not merchantWindow:IsShown() and not merchantClosed)
+
+-- closing the window ends the visit
+fire("MERCHANT_SHOW"); runTimers()
+assert(merchantWindow:IsShown())
+merchantWindow:Hide()
+assert(merchantClosed)
+
+-- a later merchant without grimoires stays open
+merchantClosed = false
+fire("MERCHANT_SHOW"); runTimers()
+merchantItems = { 159 }
+fire("MERCHANT_SHOW"); runTimers()
+assert(not merchantWindow:IsShown() and not merchantClosed)
 print("OK")

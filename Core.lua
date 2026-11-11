@@ -49,12 +49,16 @@ end
 local getSpellName = C_Spell and C_Spell.GetSpellName or GetSpellInfo
 local getSpellSubtext = C_Spell and C_Spell.GetSpellSubtext or GetSpellSubtext
 
-function ns:DisplayName(entry)
+-- Ability name and rank, e.g. "Blood Pact", "Rank 3". The rank is nil for abilities without ranks.
+function ns:SpellText(entry)
     local name, subtext = getSpellName(entry.spellId), getSpellSubtext(entry.spellId)
-    if name then
-        return (subtext and subtext ~= "") and string.format("%s (%s)", name, subtext) or name
-    end
-    return C_Item.GetItemNameByID(entry.itemId) or ("#" .. entry.itemId)
+    if not name then return C_Item.GetItemNameByID(entry.itemId) or ("#" .. entry.itemId) end
+    return name, (subtext and subtext ~= "") and subtext or nil
+end
+
+function ns:DisplayName(entry)
+    local name, rank = self:SpellText(entry)
+    return rank and string.format("%s (%s)", name, rank) or name
 end
 
 local isSpellKnown = C_SpellBook and C_SpellBook.IsSpellKnown or IsPlayerSpell
@@ -133,7 +137,8 @@ function ns:Scan()
 end
 
 function ns:Refresh()
-    if ns.UpdateWindow then ns.UpdateWindow() end
+    ns.UpdateWindow()
+    ns.UpdateMerchant()
 end
 
 local function requestData()
@@ -181,6 +186,7 @@ events:SetScript("OnEvent", function(self, event, ...)
             "PLAYER_ENTERING_WORLD", "UNIT_PET", "PET_BAR_UPDATE", "SPELLS_CHANGED",
             "UNIT_SPELLCAST_SUCCEEDED", "PLAYER_LEVEL_UP", "BAG_UPDATE_DELAYED", "PLAYER_MONEY",
             "SPELL_DATA_LOAD_RESULT", "ITEM_DATA_LOAD_RESULT",
+            "MERCHANT_SHOW", "MERCHANT_UPDATE",
         }) do
             self:RegisterEvent(name)
         end
@@ -211,6 +217,8 @@ events:SetScript("OnEvent", function(self, event, ...)
         levelOverride = level
         ns:Refresh()
         noticeLevel(level)
+    elseif event == "MERCHANT_SHOW" then
+        ns.MerchantShow()
     else
         debounce("refresh", 0.2, function() ns:Refresh() end)
     end

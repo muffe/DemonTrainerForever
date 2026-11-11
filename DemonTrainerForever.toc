@@ -20,4 +20,5 @@ Data.lua
 Core.lua
 Widgets.lua
 UI.lua
+Merchant.lua
 Minimap.lua
