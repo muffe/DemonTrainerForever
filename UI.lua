@@ -1,13 +1,13 @@
 local _, ns = ...
 local L = ns.L
+local T = ns.Theme
 
-local WIDTH, HEIGHT = 340, 480
-local CONTENT_WIDTH = WIDTH - 46
-local HEADER_HEIGHT, ITEM_HEIGHT, SECTION_GAP = 22, 18, 6
+local WIDTH, HEIGHT = 360, 520
+local HEADER_HEIGHT, ITEM_HEIGHT, ITEM_GAP, SECTION_GAP = 26, 22, 1, 8
 -- Level sections further away than this start collapsed.
 local EXPANDED_LEVELS = 6
 
-local frame, content
+local frame, scroll
 local familyButtons = {}
 local rows = {}
 
@@ -21,8 +21,8 @@ end
 -- Sections: available now, one per upcoming level, learned.
 local function buildSections()
     local level = ns:PlayerLevel()
-    local now = { key = "now", title = L.NOW, color = GREEN_FONT_COLOR, items = {} }
-    local learned = { key = "learned", title = L.LEARNED, color = GRAY_FONT_COLOR, items = {} }
+    local now = { key = "now", title = L.NOW, color = T.accent, items = {} }
+    local learned = { key = "learned", title = L.LEARNED, color = T.muted, items = {} }
     local sections, byLevel = {}, {}
     for _, entry in ipairs(ns.grimoires) do
         if not ns.db.hidden[entry.family] then
@@ -39,7 +39,7 @@ local function buildSections()
                         key = "L" .. entry.level,
                         level = entry.level,
                         title = L.LEVEL:format(entry.level),
-                        color = entry.level <= level + 2 and NORMAL_FONT_COLOR or GRAY_FONT_COLOR,
+                        color = entry.level <= level + 2 and { 1, 1, 1, 1 } or T.muted,
                         items = {},
                     }
                     byLevel[entry.level] = section
@@ -96,17 +96,23 @@ end
 local function acquireRow(index)
     local row = rows[index]
     if row then return row end
-    row = CreateFrame("Button", nil, content)
+    row = CreateFrame("Button", nil, scroll.content)
+    row.background = row:CreateTexture(nil, "BACKGROUND")
+    row.background:SetAllPoints()
+    row.background:SetColorTexture(unpack(T.panel))
+    row.chevron = ns.CreateChevron(row)
+    row.chevron:SetPoint("LEFT", 2, 0)
     row.icon = row:CreateTexture(nil, "ARTWORK")
+    row.icon:SetPoint("LEFT", 8, 0)
+    row.icon:SetSize(16, 16)
+    row.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     row.right = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    row.right:SetPoint("RIGHT", -2, 0)
+    row.right:SetPoint("RIGHT", -8, 0)
     row.right:SetJustifyH("RIGHT")
-    row.left = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    row.left:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
-    row.left:SetPoint("RIGHT", row.right, "LEFT", -8, 0)
+    row.left = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     row.left:SetJustifyH("LEFT")
     row.left:SetWordWrap(false)
-    row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+    ns.AddHighlight(row)
     row:SetScript("OnClick", onRowClick)
     row:SetScript("OnEnter", onRowEnter)
     row:SetScript("OnLeave", GameTooltip_Hide)
@@ -114,53 +120,66 @@ local function acquireRow(index)
     return row
 end
 
-local function placeRow(row, y, height, indent, iconSize)
+local function placeRow(row, y, height, anchor)
     row:ClearAllPoints()
-    row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
-    row:SetPoint("RIGHT", content, "RIGHT")
+    row:SetPoint("TOPLEFT", scroll.content, "TOPLEFT", 0, -y)
+    row:SetPoint("RIGHT", scroll.content, "RIGHT")
     row:SetHeight(height)
-    row.icon:ClearAllPoints()
-    row.icon:SetPoint("LEFT", indent, 0)
-    row.icon:SetSize(iconSize, iconSize)
+    row.left:ClearAllPoints()
+    row.left:SetPoint("LEFT", anchor, "RIGHT", 6, 0)
+    row.left:SetPoint("RIGHT", row.right, "LEFT", -8, 0)
     row:Show()
 end
 
 local function showHeader(row, section)
     row.section, row.item = section, nil
-    row.icon:SetTexture(isCollapsed(section) and "Interface\\Buttons\\UI-PlusButton-Up"
-        or "Interface\\Buttons\\UI-MinusButton-Up")
-    row.icon:SetDesaturated(false)
-    row.left:SetFontObject(GameFontNormal)
-    row.left:SetText(section.title)
-    row.left:SetTextColor(section.color:GetRGB())
+    row.expanded = not isCollapsed(section)
+    row.background:Hide()
+    row.icon:Hide()
+    row.chevron:Show()
+    row.chevron:SetExpanded(row.expanded)
+    row.left:SetFontObject(GameFontNormalSmall)
+    row.left:SetText(ns.Upper(section.title))
+    row.left:SetTextColor(unpack(section.color))
     local text, cost = summary(section)
     row.right:SetText(text)
-    row.right:SetTextColor((GetMoney() < cost and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR):GetRGB())
+    if GetMoney() < cost then
+        row.right:SetTextColor(RED_FONT_COLOR:GetRGB())
+    else
+        row.right:SetTextColor(unpack(T.muted))
+    end
 end
 
 local function showItem(row, item)
     local entry, status = item.entry, item.status
     local muted = status == "learned" or status == "unknown"
     row.section, row.item = nil, item
+    row.background:Show()
+    row.chevron:Hide()
+    row.icon:Show()
     row.icon:SetTexture(ns:FamilyIcon(entry.family))
     row.icon:SetDesaturated(muted)
-    row.left:SetFontObject(GameFontHighlightSmall)
+    row.left:SetFontObject(GameFontHighlight)
     row.left:SetText(ns:DisplayName(entry))
-    row.left:SetTextColor((muted and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR):GetRGB())
+    if muted then
+        row.left:SetTextColor(unpack(T.muted))
+    else
+        row.left:SetTextColor(1, 1, 1)
+    end
     if status == "learned" then
         row.right:SetText("")
     elseif status == "bags" then
         row.right:SetText(L.IN_BAGS)
-        row.right:SetTextColor(GREEN_FONT_COLOR:GetRGB())
+        row.right:SetTextColor(unpack(T.accent))
     else
         row.right:SetText(ns.Coins(entry.cost))
-        local color = HIGHLIGHT_FONT_COLOR
         if muted then
-            color = GRAY_FONT_COLOR
+            row.right:SetTextColor(unpack(T.muted))
         elseif GetMoney() < entry.cost then
-            color = RED_FONT_COLOR
+            row.right:SetTextColor(RED_FONT_COLOR:GetRGB())
+        else
+            row.right:SetTextColor(1, 1, 1)
         end
-        row.right:SetTextColor(color:GetRGB())
     end
 end
 
@@ -170,43 +189,47 @@ render = function()
         if index > 1 then y = y + SECTION_GAP end
         count = count + 1
         local row = acquireRow(count)
-        placeRow(row, y, HEADER_HEIGHT, 2, 14)
+        placeRow(row, y, HEADER_HEIGHT, row.chevron)
         showHeader(row, section)
         y = y + HEADER_HEIGHT
         if not isCollapsed(section) then
             for _, item in ipairs(section.items) do
                 count = count + 1
                 row = acquireRow(count)
-                placeRow(row, y, ITEM_HEIGHT, 20, 16)
+                placeRow(row, y, ITEM_HEIGHT, row.icon)
                 showItem(row, item)
-                y = y + ITEM_HEIGHT
+                y = y + ITEM_HEIGHT + ITEM_GAP
             end
         end
     end
     for i = count + 1, #rows do rows[i]:Hide() end
-    content:SetHeight(math.max(y, 1))
+    scroll:SetContentHeight(y)
 end
 
 local function updateFamilyButtons()
     for family, button in pairs(familyButtons) do
         local hidden = ns.db.hidden[family] == true
         button.icon:SetDesaturated(hidden)
-        button:SetAlpha(hidden and 0.4 or 1)
+        button:SetAlpha(hidden and 0.35 or 1)
+        button:SetBackdropBorderColor(unpack(hidden and T.border or T.accent))
         button.unknown:SetShown(not ns.db.scanned[family] and ns:HasDemon(family))
     end
 end
 
 local function createFamilyButton(family, index)
-    local button = CreateFrame("Button", nil, frame)
-    button:SetSize(28, 28)
-    button:SetPoint("TOPLEFT", frame, "TOPLEFT", 18 + (index - 1) * 34, -32)
+    local button = CreateFrame("Button", nil, frame, "BackdropTemplate")
+    button:SetSize(32, 32)
+    button:SetPoint("TOPLEFT", frame, "TOPLEFT", 16 + (index - 1) * 40, -46)
+    ns.SetBackdrop(button, { 0, 0, 0, 0.3 }, T.border)
     button.icon = button:CreateTexture(nil, "ARTWORK")
-    button.icon:SetAllPoints()
+    button.icon:SetPoint("TOPLEFT", 2, -2)
+    button.icon:SetPoint("BOTTOMRIGHT", -2, 2)
+    button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     button.icon:SetTexture(ns:FamilyIcon(family))
     button.unknown = button:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
-    button.unknown:SetPoint("BOTTOMRIGHT", -1, 2)
+    button.unknown:SetPoint("BOTTOMRIGHT", -2, 3)
     button.unknown:SetText("?")
-    button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    ns.AddHighlight(button)
     button:SetScript("OnClick", function()
         ns.db.hidden[family] = not ns.db.hidden[family] or nil
         ns.UpdateWindow()
@@ -224,8 +247,7 @@ local function createFamilyButton(family, index)
 end
 
 local function createFrame()
-    frame = CreateFrame("Frame", "DemonTrainerForeverFrame", UIParent, "UIPanelDialogTemplate")
-    frame:Hide()
+    frame = ns.CreateWindow("DemonTrainerForeverFrame", UIParent)
     frame:SetSize(WIDTH, HEIGHT)
     local point = ns.db.point
     if point then
@@ -234,9 +256,9 @@ local function createFrame()
         frame:SetPoint("CENTER")
     end
     frame:SetFrameStrata("HIGH")
+    frame:SetToplevel(true)
     frame:SetMovable(true)
     frame:SetClampedToScreen(true)
-    frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
     frame:SetScript("OnDragStop", function(self)
@@ -249,19 +271,17 @@ local function createFrame()
         ns.UpdateWindow()
     end)
     frame:SetScript("OnHide", function() PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE) end)
-    frame.Title:SetText(L.TITLE)
+    frame.title:SetText(L.TITLE)
     tinsert(UISpecialFrames, frame:GetName())
 
     for index, family in ipairs(ns.FAMILIES) do
         createFamilyButton(family, index)
     end
+    ns.AddDivider(frame, -90)
 
-    local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 14, -70)
-    scroll:SetPoint("BOTTOMRIGHT", -32, 14)
-    content = CreateFrame("Frame", nil, scroll)
-    content:SetSize(CONTENT_WIDTH, 1)
-    scroll:SetScrollChild(content)
+    scroll = ns.CreateScroll(frame)
+    scroll:SetPoint("TOPLEFT", 12, -98)
+    scroll:SetPoint("BOTTOMRIGHT", -20, 12)
 end
 
 function ns.UpdateWindow()

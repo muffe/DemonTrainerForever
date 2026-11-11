@@ -18,5 +18,6 @@ Libs\LibDBIcon-1.0\lib.xml
 Locale.lua
 Data.lua
 Core.lua
+Widgets.lua
 UI.lua
 Minimap.lua

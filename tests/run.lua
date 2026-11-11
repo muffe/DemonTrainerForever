@@ -11,6 +11,8 @@ local function obj(kind)
       elseif k == "Show" then local was=self._shown; self._shown = true; if not was and self._scripts.OnShow then self._scripts.OnShow(self) end
       elseif k == "Hide" then self._shown = false
       elseif k == "IsShown" then return self._shown
+      elseif k == "GetWidth" or k == "GetHeight" then return 300
+      elseif k == "GetValue" then return 0
       elseif k == "SetScript" then self._scripts[a[1]] = a[2]
       elseif k == "RegisterEvent" then self._events[a[1]] = true
       elseif k == "UnregisterEvent" then self._events[a[1]] = nil
@@ -67,6 +69,7 @@ SOUNDKIT = {}; function PlaySound() end
 local linked
 function HandleModifiedItemClick(link) linked = link end
 C_Item.GetItemInfo = function(id) return "Item"..id, "[Item"..id.."]" end
+GameFontHighlight, GameFontHighlightLarge, GameFontNormalSmall = {}, {}, {}
 
 
 -- LibDataBroker / LibDBIcon stubs
@@ -88,7 +91,7 @@ local fakeTooltip = {
 }
 
 local ns = {}
-for _, file in ipairs({ "Locale.lua", "Data.lua", "Core.lua", "UI.lua", "Minimap.lua" }) do
+for _, file in ipairs({ "Locale.lua", "Data.lua", "Core.lua", "Widgets.lua", "UI.lua", "Minimap.lua" }) do
   assert(loadfile(dir .. "/" .. file))("DemonTrainerForever", ns)
 end
 
@@ -134,7 +137,7 @@ SlashCmdList.DEMONTRAINERFOREVER("")
 local function dump()
   for _, f in ipairs(frames) do
     if f._kind == "Button" and rawget(f, "left") and f._shown then
-      io.write(string.format("%-3s %-40s %s\n", f._h == 22 and "##" or "", f.left._text or "", f.right._text or ""))
+      io.write(string.format("%-3s %-40s %s\n", f._h == 26 and "##" or "", f.left._text or "", f.right._text or ""))
     end
   end
 end
@@ -159,11 +162,11 @@ launcher.OnTooltipShow(fakeTooltip)
 assert(tooltipLines[2] == "Nächste Grimoires = Stufe 34", tooltipLines[2])
 local function headerShown(text)
   for _, f in ipairs(frames) do
-    if f._kind == "Button" and f._h == 22 and f._shown and rawget(f, "left") and f.left._text == text then return true end
+    if f._kind == "Button" and rawget(f, "section") and f._shown and f.left._text == text then return true end
   end
 end
 ns.UpdateWindow()
-assert(not headerShown("Jetzt verfügbar"), "empty 'available now' section must be hidden")
+assert(not headerShown("JETZT VERFÜGBAR"), "empty 'available now' section must be hidden")
 db.learned = learnedBefore
 SlashCmdList.DEMONTRAINERFOREVER(" Minimap ")
 assert(iconShown == false and DemonTrainerForeverDB.minimap.hide == true)
@@ -176,13 +179,13 @@ assert(ns:HasDemon("Felhunter"))
 
 -- level sections more than 6 levels away start collapsed (player is 32)
 ns.UpdateWindow()
-local function headerIcon(text)
+local function headerExpanded(text)
   for _, f in ipairs(frames) do
-    if f._kind == "Button" and f._h == 22 and f._shown and rawget(f, "left") and f.left._text == text then return f.icon._tex end
+    if f._kind == "Button" and rawget(f, "section") and f._shown and f.left._text == text then return f.expanded end
   end
 end
-assert(headerIcon("Stufe 38") == "Interface\\Buttons\\UI-MinusButton-Up", tostring(headerIcon("Stufe 38")))
-assert(headerIcon("Stufe 40") == "Interface\\Buttons\\UI-PlusButton-Up", tostring(headerIcon("Stufe 40")))
+assert(headerExpanded("STUFE 38") == true)
+assert(headerExpanded("STUFE 40") == false)
 
 -- shift-click on a grimoire row links it in chat
 for _, f in ipairs(frames) do
@@ -193,4 +196,5 @@ local window = DemonTrainerForeverFrame
 local wasShown = window:IsShown()
 launcher.OnClick()
 assert(window:IsShown() ~= wasShown)
+
 print("OK")
