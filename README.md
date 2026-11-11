@@ -6,7 +6,7 @@ Warlock addon for WoW Forever. Shows which grimoires your demons can learn, at w
 
 ## Features
 
-- At the demon trainer, a list of the grimoires you can buy at your level and your demons still need replaces the merchant window. Click a grimoire to buy it. The Merchant button brings back the normal merchant window.
+- At the demon trainer, a list of the grimoires you can buy at your level and your demons still need replaces the merchant window. Right-click a grimoire to buy it. The Merchant button brings back the normal merchant window.
 - Grimoires grouped by level, with count and total cost per level, so you can tell whether a trainer visit is worth it.
 - Learned grimoires are detected from your demon's spellbook. Summon each demon once.
 - Grimoires in your bags show as "In bags".

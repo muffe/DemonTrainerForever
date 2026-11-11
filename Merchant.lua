@@ -48,16 +48,23 @@ local function toBuy()
     return list
 end
 
-local function onCardClick(card)
+-- Like at the merchant frame: right-click buys, left-click picks the grimoire up.
+local function onCardClick(card, button)
     if IsModifiedClick() then
         local link = select(2, C_Item.GetItemInfo(card.entry.itemId))
         if link then HandleModifiedItemClick(link) end
-        return
+    elseif button == "RightButton" then
+        BuyMerchantItem(slots[card.entry.itemId], 1)
+        -- until the bags update, so a double click doesn't buy twice
+        card:Disable()
+        card:SetAlpha(0.4)
+    else
+        PickupMerchantItem(slots[card.entry.itemId])
     end
-    BuyMerchantItem(slots[card.entry.itemId], 1)
-    -- until the bags update, so a double click doesn't buy twice
-    card:Disable()
-    card:SetAlpha(0.4)
+end
+
+local function onCardDrag(card)
+    PickupMerchantItem(slots[card.entry.itemId])
 end
 
 local function onCardEnter(card)
@@ -98,7 +105,10 @@ local function acquireCard(index)
     card.cost = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     card.cost:SetPoint("BOTTOMLEFT", card.icon, "BOTTOMRIGHT", 8, 0)
     ns.AddHighlight(card)
+    card:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    card:RegisterForDrag("LeftButton")
     card:SetScript("OnClick", onCardClick)
+    card:SetScript("OnDragStart", onCardDrag)
     card:SetScript("OnEnter", onCardEnter)
     card:SetScript("OnLeave", onCardLeave)
     cards[index] = card

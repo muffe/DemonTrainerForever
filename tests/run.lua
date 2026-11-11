@@ -82,6 +82,8 @@ MerchantFrame = obj("Frame")
 function GetMerchantNumItems() return #merchantItems end
 function GetMerchantItemID(i) return merchantItems[i] end
 function BuyMerchantItem(i, n) table.insert(bought, { merchantItems[i], n }) end
+local pickedUp
+function PickupMerchantItem(i) pickedUp = merchantItems[i] end
 function CloseMerchant() merchantClosed = true end
 
 
@@ -239,10 +241,12 @@ assert(merchantWindow:IsShown())
 -- Soothing Kiss r1 (16375) is learned by the Succubus only.
 assert(shownKeys() == "Incubus:16368 Incubus:16375 Incubus:16379 Incubus:16380 Succubus:16368 Succubus:16379 Succubus:16380", shownKeys())
 
--- clicking a row buys it from the right merchant slot
+-- like at the merchant frame, left-click picks a grimoire up and right-click buys it from the right merchant slot
 local seduction
 for _, row in ipairs(merchantRows()) do if row.entry.key == "Succubus:16379" then seduction = row end end
-seduction._scripts.OnClick(seduction)
+seduction._scripts.OnClick(seduction, "LeftButton")
+assert(pickedUp == 16379 and #bought == 0)
+seduction._scripts.OnClick(seduction, "RightButton")
 assert(#bought == 1 and bought[1][1] == 16379 and bought[1][2] == 1)
 
 -- one Seduction grimoire in the bags covers only one of the two demons
